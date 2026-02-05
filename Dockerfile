@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # (先複製清單是為了 Docker Cache 機制，加速之後的 Build)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+ENV SENTENCE_TRANSFORMERS_HOME=/app/model_cache
 # 複製預載腳本並執行
 COPY preload_model.py .
 RUN python preload_model.py
