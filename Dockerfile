@@ -13,8 +13,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # (先複製清單是為了 Docker Cache 機制，加速之後的 Build)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-# 5. 複製程式碼與資料庫
+# 複製預載腳本並執行
+COPY preload_model.py .
+RUN python preload_model.py
+# 複製程式碼與資料庫
 # 我們把目前的 rag_bot.py 和已經建好的 mario_db_local 資料夾都複製進去
 COPY rag_bot.py .
 COPY mario_db_local ./mario_db_local
