@@ -25,7 +25,7 @@ def load_resources():
     
     # 初始化 Embedding
     emb_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-        model_name="paraphrase-multilingual-MiniLM-L12-v2"
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
     
     # 連線資料庫 (注意：Docker 內的路徑)
