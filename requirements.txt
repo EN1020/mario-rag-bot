@@ -1,4 +1,3 @@
 google-genai
 chromadb
-sentence-transformers
 streamlit

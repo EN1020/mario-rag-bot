@@ -1,56 +1,52 @@
 import chromadb
-from chromadb.utils import embedding_functions
+from google import genai
 import os
 import shutil
+import getpass # 🛡️ 新增這個安全套件
 
-print("🍄 開始重建瑪利歐知識庫...")
+print("🍄 開始建立【純 API 雲端版】瑪利歐知識庫...")
 
-# ==========================================
-# 1. 準備知識庫資料 (這裡放你想讓 AI 知道的事情)
-# ==========================================
+# 1. 取得 API Key (使用 getpass 隱藏輸入)
+api_key = os.getenv("GOOGLE_API_KEY")
+if not api_key:
+    # ⚠️ 安全機制：輸入時畫面不會顯示任何字，貼上後直接按 Enter 即可
+    api_key = getpass.getpass("🔑 請貼上你的 GOOGLE_API_KEY: ")
+
+client = genai.Client(api_key=api_key)
+
+# 2. 準備知識庫資料
 documents = [
     "路易吉 (Luigi) 是瑪利歐的雙胞胎弟弟，穿著綠色的衣服，跳得比瑪利歐高。",
     "碧姬公主 (Princess Peach) 經常被庫巴綁架，瑪利歐必須去城堡救她。",
     "瑪利歐的主要敵人是庫巴 (Bowser)，他是一隻會噴火的巨大烏龜。",
     "瑪利歐吃下火之花 (Fire Flower) 後可以丟出火球攻擊敵人。"
 ]
-
-# 給每筆資料一個獨一無二的 ID
 ids = ["doc_1", "doc_2", "doc_3", "doc_4"]
 
-# ==========================================
-# 2. 清理舊環境 (防呆機制)
-# ==========================================
+# 3. 清理舊環境
 db_path = "./mario_db_local"
 if os.path.exists(db_path):
-    print(f"🧹 發現舊的資料庫資料夾 ({db_path})，正在為你清空...")
     shutil.rmtree(db_path)
 
-# ==========================================
-# 3. 初始化「輕量級」Embedding 模型 (解決 512MB RAM 限制的關鍵)
-# ==========================================
-print("📦 正在下載/載入輕量級模型 (all-MiniLM-L6-v2)...")
-emb_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
+# 4. 透過 Google API 將文字轉成向量
+print("☁️ 正在呼叫 Google API 計算向量...")
+embeddings = []
+for doc in documents:
+    response = client.models.embed_content(
+        model="gemini-embedding-001", # 🔥 更新為最新模型
+        contents=doc
+    )
+    embeddings.append(response.embeddings[0].values)
 
-# ==========================================
-# 4. 建立與寫入 ChromaDB 資料庫
-# ==========================================
-print("🔨 正在建立新的向量資料庫...")
+# 5. 寫入 ChromaDB
+print("💾 正在寫入資料庫...")
 chroma_client = chromadb.PersistentClient(path=db_path)
+collection = chroma_client.create_collection(name="mario_knowledge")
 
-# 建立 Collection
-collection = chroma_client.create_collection(
-    name="mario_knowledge",
-    embedding_function=emb_fn
-)
-
-# 將文本寫入
-print("💾 正在將文本轉成向量並存入資料庫...")
 collection.add(
     documents=documents,
+    embeddings=embeddings, 
     ids=ids
 )
 
-print("✅ 大功告成！全新的 mario_db_local 資料夾已產生！")
+print("✅ 大功告成！全新的 API 版資料庫已產生！")
